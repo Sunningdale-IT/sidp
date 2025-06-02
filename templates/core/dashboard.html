@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Internal Developer Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-orange) 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 3rem;
+        border-radius: 0 0 24px 24px;
+    }
+
+    .dashboard-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        border-left: 4px solid var(--primary-orange);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-teal);
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--dark-gray);
+        font-weight: 500;
+    }
+
+    .panel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .panel-card {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--medium-gray);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .panel-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-orange), var(--accent-yellow));
+    }
+
+    .panel-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
+    }
+
+    .panel-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary-orange), var(--accent-yellow));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .panel-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-teal);
+        margin-bottom: 0.5rem;
+    }
+
+    .panel-description {
+        color: var(--dark-gray);
+        margin-bottom: 1.5rem;
+        line-height: 1.6;
+    }
+
+    .panel-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .quick-actions {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin-bottom: 3rem;
+    }
+
+    .quick-actions h3 {
+        color: var(--primary-teal);
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+
+    .action-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: var(--light-gray);
+        border: 2px solid transparent;
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--charcoal);
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .action-btn:hover {
+        background: var(--primary-orange);
+        color: white;
+        border-color: var(--primary-orange);
+        transform: translateY(-2px);
+    }
+
+    .action-icon {
+        font-size: 1.25rem;
+    }
+
+    .recent-activity {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--medium-gray);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: var(--light-gray);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-teal);
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-title {
+        font-weight: 500;
+        color: var(--charcoal);
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-time {
+        font-size: 0.875rem;
+        color: var(--dark-gray);
+    }
+
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--accent-yellow) 0%, var(--primary-orange) 100%);
+        color: var(--charcoal);
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.8;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .panel-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div class="container">
+        <h1 class="page-title" style="color: white; margin-bottom: 0.5rem;">Welcome to IDP</h1>
+        <p class="page-subtitle" style="color: rgba(255,255,255,0.9); margin-bottom: 0;">Your Internal Developer Platform</p>
+    </div>
+</div>
+
+<div class="welcome-banner fade-in-up">
+    <div class="welcome-title">🚀 Ready to Ship Faster?</div>
+    <div class="welcome-subtitle">Self-service platform for modern development teams</div>
+</div>
+
+<!-- Dashboard Statistics -->
+<div class="dashboard-stats fade-in-up">
+    <div class="stat-card">
+        <div class="stat-number">{{ panels.count }}</div>
+        <div class="stat-label">Active Panels</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">12</div>
+        <div class="stat-label">Services</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">8</div>
+        <div class="stat-label">Environments</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">24</div>
+        <div class="stat-label">Deployments Today</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions fade-in-up">
+    <h3>🎯 Quick Actions</h3>
+    <div class="action-buttons">
+        <a href="/admin/panels/panel/add/" class="action-btn">
+            <span class="action-icon">➕</span>
+            Create Panel
+        </a>
+        <a href="/admin/operations/operationtemplate/add/" class="action-btn">
+            <span class="action-icon">⚙️</span>
+            New Operation
+        </a>
+        <a href="/api/schema/swagger-ui/" class="action-btn">
+            <span class="action-icon">📚</span>
+            API Docs
+        </a>
+        <a href="http://localhost:5555" class="action-btn" target="_blank">
+            <span class="action-icon">📊</span>
+            Monitor Tasks
+        </a>
+        <a href="/admin/core/secretstore/" class="action-btn">
+            <span class="action-icon">🔐</span>
+            Manage Secrets
+        </a>
+        <a href="/admin/" class="action-btn">
+            <span class="action-icon">🛠️</span>
+            Admin Panel
+        </a>
+    </div>
+</div>
+
+<!-- User Profile Section -->
+<div class="quick-actions fade-in-up">
+    <h3>👤 User Profile</h3>
+    <div class="user-profile-section" style="display: flex; align-items: center; justify-content: space-between; background: var(--light-gray); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="user-avatar" style="width: 60px; height: 60px; border-radius: 50%; background: var(--primary-orange); display: flex; align-items: center; justify-content: center; font-weight: 600; color: white; font-size: 1.5rem;">
+                {{ user.first_name.0|default:user.username.0|upper }}
+            </div>
+            <div>
+                <div style="font-size: 1.25rem; font-weight: 600; color: var(--charcoal); margin-bottom: 0.25rem;">
+                    {{ user.get_full_name|default:user.username }}
+                </div>
+                <div style="color: var(--dark-gray); font-size: 0.9rem;">
+                    {{ user.email|default:"No email set" }}
+                </div>
+                <div style="color: var(--dark-gray); font-size: 0.85rem; margin-top: 0.25rem;">
+                    {% if user.is_superuser %}
+                        🔑 Superuser Access
+                    {% else %}
+                        👤 Regular User
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <a href="/admin/auth/user/{{ user.id }}/change/" class="btn btn-outline" style="padding: 0.75rem 1.25rem;">
+                ⚙️ Edit Profile
+            </a>
+            <a href="{% url 'core:logout' %}" class="btn btn-primary" style="background: #dc3545; border-color: #dc3545; padding: 0.75rem 1.5rem; font-weight: 600;">
+                🚪 Logout
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Panels Grid -->
+{% if panels %}
+<div class="panel-grid fade-in-up">
+    {% for panel in panels %}
+    <div class="panel-card">
+        <div class="panel-icon">
+            {% if 'deploy' in panel.title|lower %}🚀
+            {% elif 'database' in panel.title|lower %}🗄️
+            {% elif 'monitor' in panel.title|lower %}📊
+            {% elif 'security' in panel.title|lower %}🔒
+            {% elif 'config' in panel.title|lower %}⚙️
+            {% else %}📋{% endif %}
+        </div>
+        <div class="panel-title">{{ panel.title }}</div>
+        <div class="panel-description">
+            {{ panel.description|default:"Configure and manage your development workflow with this panel." }}
+        </div>
+        <div class="panel-actions">
+            <a href="{% url 'core:panel_detail' panel.id %}" class="btn btn-primary">
+                Use Panel
+            </a>
+            <a href="/api/panels/panels/{{ panel.id }}/" class="btn btn-outline">
+                View API
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="panel-grid fade-in-up">
+    <div class="panel-card">
+        <div class="panel-icon">🚀</div>
+        <div class="panel-title">Deployment Pipeline</div>
+        <div class="panel-description">
+            Streamline your deployment process with automated CI/CD pipelines and environment management.
+        </div>
+        <div class="panel-actions">
+            <a href="/admin/panels/panel/add/" class="btn btn-primary">
+                Create Panel
+            </a>
+        </div>
+    </div>
+    
+    <div class="panel-card">
+        <div class="panel-icon">🗄️</div>
+        <div class="panel-title">Database Management</div>
+        <div class="panel-description">
+            Provision and manage databases across different environments with automated backup and monitoring.
+        </div>
+        <div class="panel-actions">
+            <a href="/admin/panels/panel/add/" class="btn btn-primary">
+                Create Panel
+            </a>
+        </div>
+    </div>
+    
+    <div class="panel-card">
+        <div class="panel-icon">📊</div>
+        <div class="panel-title">Monitoring & Observability</div>
+        <div class="panel-description">
+            Set up comprehensive monitoring, logging, and alerting for your applications and infrastructure.
+        </div>
+        <div class="panel-actions">
+            <a href="/admin/panels/panel/add/" class="btn btn-primary">
+                Create Panel
+            </a>
+        </div>
+    </div>
+    
+    <div class="panel-card">
+        <div class="panel-icon">🔒</div>
+        <div class="panel-title">Security & Compliance</div>
+        <div class="panel-description">
+            Manage security policies, secrets, and compliance requirements across your development lifecycle.
+        </div>
+        <div class="panel-actions">
+            <a href="/admin/panels/panel/add/" class="btn btn-primary">
+                Create Panel
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Activity -->
+<div class="recent-activity fade-in-up">
+    <h3 style="color: var(--primary-teal); margin-bottom: 1.5rem;">📈 Recent Activity</h3>
+    
+    <div class="activity-item">
+        <div class="activity-icon">🚀</div>
+        <div class="activity-content">
+            <div class="activity-title">Deployment to production completed</div>
+            <div class="activity-time">2 minutes ago</div>
+        </div>
+        <span class="status status-success">Success</span>
+    </div>
+    
+    <div class="activity-item">
+        <div class="activity-icon">⚙️</div>
+        <div class="activity-content">
+            <div class="activity-title">New operation template created</div>
+            <div class="activity-time">15 minutes ago</div>
+        </div>
+        <span class="status status-info">Created</span>
+    </div>
+    
+    <div class="activity-item">
+        <div class="activity-icon">👤</div>
+        <div class="activity-content">
+            <div class="activity-title">User {{ user.username }} logged in</div>
+            <div class="activity-time">Just now</div>
+        </div>
+        <span class="status status-info">Login</span>
+    </div>
+    
+    <div class="activity-item">
+        <div class="activity-icon">🔐</div>
+        <div class="activity-content">
+            <div class="activity-title">Secret rotation completed</div>
+            <div class="activity-time">1 hour ago</div>
+        </div>
+        <span class="status status-success">Completed</span>
+    </div>
+</div>
+
+<script>
+// Add some interactivity
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate statistics on load
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach(stat => {
+        const finalValue = parseInt(stat.textContent);
+        let currentValue = 0;
+        const increment = finalValue / 20;
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= finalValue) {
+                stat.textContent = finalValue;
+                clearInterval(timer);
+            } else {
+                stat.textContent = Math.floor(currentValue);
+            }
+        }, 50);
+    });
+    
+    // Add hover effects to panel cards
+    const panelCards = document.querySelectorAll('.panel-card');
+    panelCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %} 

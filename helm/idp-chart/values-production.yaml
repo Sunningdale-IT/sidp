@@ -1,0 +1,246 @@
+# Production values for idp.
+# This is a YAML-formatted file.
+
+# Production environment configuration
+env:
+  DEBUG: "False"
+  ALLOWED_HOSTS: "idp.yourcompany.com,localhost,127.0.0.1"
+  CORS_ALLOWED_ORIGINS: "https://idp.yourcompany.com"
+  PROMETHEUS_METRICS_ENABLED: "True"
+
+# Use your container registry
+image:
+  registry: your-registry.com
+  repository: idp/app
+  tag: "v1.0.0"
+  pullPolicy: Always
+
+# Production replica counts
+replicaCount:
+  web: 3
+  celery: 3
+  celeryBeat: 1
+  flower: 1
+
+# Configure ingress for your domain
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+  hosts:
+    - host: idp.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: web
+    - host: flower.idp.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: flower
+  tls:
+    - secretName: idp-tls
+      hosts:
+        - idp.yourcompany.com
+        - flower.idp.yourcompany.com
+
+# Production secrets (use external secret management in real production)
+secrets:
+  secretKey: "your-secure-django-secret-key-change-me"
+  dbPassword: "your-secure-database-password-change-me"
+  additionalSecrets:
+    # Add your cloud provider secrets here
+    # AWS_ACCESS_KEY_ID: "your-aws-key"
+    # AWS_SECRET_ACCESS_KEY: "your-aws-secret"
+    # AZURE_SUBSCRIPTION_ID: "your-azure-subscription"
+
+# Production database configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "your-secure-database-password-change-me"
+    username: "postgres"
+    password: "your-secure-database-password-change-me"
+    database: "idp"
+  primary:
+    persistence:
+      enabled: true
+      size: 100Gi
+      storageClass: "fast-ssd"  # Use your preferred storage class
+    resources:
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+
+# Production Redis configuration
+redis:
+  enabled: true
+  auth:
+    enabled: false  # Enable if you want Redis authentication
+  master:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: "fast-ssd"  # Use your preferred storage class
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+# Production resource limits
+resources:
+  web:
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  celery:
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+  celeryBeat:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  flower:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Enable autoscaling for production
+autoscaling:
+  enabled: true
+  web:
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  celery:
+    minReplicas: 3
+    maxReplicas: 50
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget for high availability
+podDisruptionBudget:
+  enabled: true
+  web:
+    minAvailable: 2
+  celery:
+    minAvailable: 2
+
+# Persistent storage for static files
+persistence:
+  enabled: true
+  storageClass: "fast-ssd"  # Use your preferred storage class
+  accessMode: ReadWriteOnce
+  size: 50Gi
+
+# Enhanced health checks for production
+healthChecks:
+  enabled: true
+  web:
+    livenessProbe:
+      httpGet:
+        path: /health/
+        port: 8000
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /health/
+        port: 8000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+  celery:
+    livenessProbe:
+      exec:
+        command:
+          - celery
+          - -A
+          - idp
+          - inspect
+          - ping
+      initialDelaySeconds: 60
+      periodSeconds: 60
+      timeoutSeconds: 30
+      failureThreshold: 3
+
+# Production node affinity (optional)
+affinity:
+  nodeAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: node-type
+          operator: In
+          values:
+          - compute-optimized
+
+# Tolerations for dedicated nodes (optional)
+tolerations: []
+# - key: "dedicated"
+#   operator: "Equal"
+#   value: "idp"
+#   effect: "NoSchedule"
+
+# Node selector for specific nodes (optional)
+nodeSelector: {}
+# node-type: compute-optimized
+
+# Enable monitoring
+podMonitor:
+  enabled: true
+  namespace: monitoring
+  interval: 30s
+  path: /metrics
+
+# Network policies for security (optional)
+networkPolicy:
+  enabled: false
+  ingress:
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: ingress-nginx
+      ports:
+      - protocol: TCP
+        port: 8000
+  egress:
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 5432  # PostgreSQL
+      - protocol: TCP
+        port: 6379  # Redis
+      - protocol: TCP
+        port: 53    # DNS
+      - protocol: UDP
+        port: 53    # DNS 

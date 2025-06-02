@@ -1,0 +1,643 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ panel.title }} - Internal Developer Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .panel-header {
+        background: linear-gradient(135deg, var(--primary-teal) 0%, var(--primary-orange) 100%);
+        color: white;
+        padding: 3rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 20px 20px;
+    }
+
+    .panel-form-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 2rem;
+    }
+
+    .panel-form {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 78, 100, 0.1);
+        padding: 3rem;
+        border: 1px solid var(--medium-gray);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .field-group {
+        margin-bottom: 2rem;
+    }
+
+    .field-label {
+        display: block;
+        font-weight: 600;
+        color: var(--charcoal);
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .field-description {
+        color: var(--dark-gray);
+        font-size: 0.9rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid var(--medium-gray);
+        border-radius: 8px;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .field-input:focus {
+        outline: none;
+        border-color: var(--primary-orange);
+        box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    }
+
+    .field-textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .field-select {
+        background: white;
+        cursor: pointer;
+    }
+
+    .field-checkbox {
+        width: auto;
+        margin-right: 0.5rem;
+    }
+
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .submit-section {
+        border-top: 2px solid var(--medium-gray);
+        padding-top: 2rem;
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+
+    .btn-submit {
+        background: var(--primary-orange);
+        color: white;
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        background: #e55a2b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+    }
+
+    .btn-cancel {
+        background: transparent;
+        color: var(--primary-teal);
+        border: 2px solid var(--primary-teal);
+        padding: 1rem 2rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-cancel:hover {
+        background: var(--primary-teal);
+        color: white;
+        text-decoration: none;
+    }
+
+    .messages {
+        margin-bottom: 2rem;
+    }
+
+    .message {
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+
+    .message.success {
+        background: #D4F4DD;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+    }
+
+    .message.error {
+        background: #FEE2E2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+
+    .panel-info {
+        background: var(--light-gray);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--primary-orange);
+    }
+
+    .panel-info h3 {
+        color: var(--primary-teal);
+        margin-bottom: 0.5rem;
+        font-size: 1.2rem;
+    }
+
+    .panel-info p {
+        color: var(--dark-gray);
+        margin: 0;
+    }
+
+    .results-section {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 78, 100, 0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid var(--medium-gray);
+    }
+
+    .submission-item {
+        border: 1px solid var(--medium-gray);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background: var(--light-gray);
+    }
+
+    .submission-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .submission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--medium-gray);
+    }
+
+    .submission-id {
+        font-weight: 600;
+        color: var(--primary-teal);
+    }
+
+    .submission-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .status-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    .status-processing {
+        background: #DBEAFE;
+        color: #1E40AF;
+    }
+
+    .status-completed {
+        background: #D4F4DD;
+        color: #065F46;
+    }
+
+    .status-failed {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+
+    .submission-data {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--medium-gray);
+    }
+
+    .data-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--light-gray);
+    }
+
+    .data-item:last-child {
+        border-bottom: none;
+    }
+
+    .data-key {
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .data-value {
+        color: var(--dark-gray);
+        font-family: 'Courier New', monospace;
+    }
+
+    .operation-results {
+        margin-top: 1rem;
+    }
+
+    .operation-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--primary-orange);
+    }
+
+    .operation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .operation-name {
+        font-weight: 600;
+        color: var(--primary-teal);
+    }
+
+    .operation-output {
+        background: #1a1a1a;
+        color: #00ff00;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 0.5rem;
+    }
+
+    .operation-error {
+        background: #2d1b1b;
+        color: #ff6b6b;
+        padding: 1rem;
+        border-radius: 8px;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow-y: auto;
+        margin-top: 0.5rem;
+    }
+
+    .no-results {
+        text-align: center;
+        color: var(--dark-gray);
+        padding: 2rem;
+        font-style: italic;
+    }
+
+    @media (max-width: 768px) {
+        .panel-form {
+            padding: 2rem;
+            margin: 1rem;
+        }
+
+        .submit-section {
+            flex-direction: column;
+        }
+
+        .btn-submit,
+        .btn-cancel {
+            width: 100%;
+            text-align: center;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="panel-header">
+    <div class="container">
+        <h1 class="page-title" style="color: white; margin-bottom: 0.5rem;">{{ panel.title }}</h1>
+        <p class="page-subtitle" style="color: rgba(255,255,255,0.9); margin-bottom: 0;">Configure and submit your request</p>
+    </div>
+</div>
+
+<div class="panel-form-container">
+    {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="panel-info">
+        <h3>📋 Panel Information</h3>
+        <p>{{ panel.description|default:"Use this panel to configure and submit your request. Fill out the form below and click submit to process your request." }}</p>
+    </div>
+
+    <!-- Recent Submissions and Results -->
+    {% if recent_submissions %}
+    <div class="results-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 style="color: var(--primary-teal); margin: 0;">📊 Recent Submissions & Results</h3>
+            <a href="{% url 'core:panel_detail' panel.id %}" class="btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+                🔄 Refresh Results
+            </a>
+        </div>
+        
+        {% for submission in recent_submissions %}
+        <div class="submission-item">
+            <div class="submission-header">
+                <div class="submission-id">Submission #{{ submission.id }}</div>
+                <div class="submission-status status-{{ submission.status }}">
+                    {% if submission.status == 'pending' %}⏳ Pending
+                    {% elif submission.status == 'processing' %}🔄 Processing
+                    {% elif submission.status == 'completed' %}✅ Completed
+                    {% elif submission.status == 'failed' %}❌ Failed
+                    {% else %}{{ submission.status|title }}{% endif %}
+                </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; color: var(--dark-gray); margin-bottom: 1rem;">
+                Submitted: {{ submission.created_at|date:"M d, Y H:i" }}
+            </div>
+            
+            <!-- Submission Data -->
+            <div class="submission-data">
+                <h4 style="color: var(--charcoal); margin-bottom: 0.5rem;">📝 Submitted Data:</h4>
+                {% for key, value in submission.data.items %}
+                <div class="data-item">
+                    <span class="data-key">{{ key|title }}:</span>
+                    <span class="data-value">{{ value }}</span>
+                </div>
+                {% empty %}
+                <div class="data-item">
+                    <span style="color: var(--dark-gray); font-style: italic;">No data submitted</span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Operation Results -->
+            {% if submission.operations.exists %}
+            <div class="operation-results">
+                <h4 style="color: var(--charcoal); margin-bottom: 1rem;">⚙️ Operation Results:</h4>
+                
+                {% for operation in submission.operations.all %}
+                <div class="operation-item">
+                    <div class="operation-header">
+                        <span class="operation-name">{{ operation.template.name }}</span>
+                        <span class="submission-status status-{{ operation.status }}">
+                            {% if operation.status == 'pending' %}⏳ Pending
+                            {% elif operation.status == 'running' %}🔄 Running
+                            {% elif operation.status == 'completed' %}✅ Completed
+                            {% elif operation.status == 'failed' %}❌ Failed
+                            {% else %}{{ operation.status|title }}{% endif %}
+                        </span>
+                    </div>
+                    
+                    {% if operation.executed_command %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>Command:</strong> 
+                        <code style="background: var(--light-gray); padding: 0.25rem 0.5rem; border-radius: 4px;">{{ operation.executed_command }}</code>
+                    </div>
+                    {% endif %}
+                    
+                    {% if operation.exit_code is not None %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>Exit Code:</strong> 
+                        <span style="color: {% if operation.exit_code == 0 %}#065F46{% else %}#991B1B{% endif %};">{{ operation.exit_code }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if operation.duration %}
+                    <div style="margin-bottom: 0.5rem;">
+                        <strong>Duration:</strong> {{ operation.duration }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if operation.output %}
+                    <div>
+                        <strong>Output:</strong>
+                        <div class="operation-output">{{ operation.output }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if operation.error_output %}
+                    <div>
+                        <strong>Error Output:</strong>
+                        <div class="operation-error">{{ operation.error_output }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if not operation.output and not operation.error_output and operation.status == 'completed' %}
+                    <div style="color: var(--dark-gray); font-style: italic;">Operation completed successfully with no output.</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="color: var(--dark-gray); font-style: italic; margin-top: 1rem;">
+                No operations configured for this panel.
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="panel-form">
+        {% csrf_token %}
+        
+        <div class="form-section">
+            <h3 style="color: var(--primary-teal); margin-bottom: 1.5rem;">📝 Configuration</h3>
+            
+            {% for field in fields %}
+                <div class="field-group">
+                    <label for="id_{{ field.name }}" class="field-label">
+                        {{ field.label|default:field.name|title }}
+                        {% if field.is_required %}<span style="color: var(--primary-orange);">*</span>{% endif %}
+                    </label>
+                    
+                    {% if field.description %}
+                        <div class="field-description">{{ field.description }}</div>
+                    {% endif %}
+                    
+                    {% if field.field_type == 'text' %}
+                        <input type="text" 
+                               id="id_{{ field.name }}" 
+                               name="{{ field.name }}" 
+                               class="field-input"
+                               placeholder="{{ field.placeholder|default:'Enter '|add:field.label|default:field.name }}"
+                               {% if field.is_required %}required{% endif %}>
+                    
+                    {% elif field.field_type == 'textarea' %}
+                        <textarea id="id_{{ field.name }}" 
+                                  name="{{ field.name }}" 
+                                  class="field-input field-textarea"
+                                  placeholder="{{ field.placeholder|default:'Enter '|add:field.label|default:field.name }}"
+                                  {% if field.is_required %}required{% endif %}></textarea>
+                    
+                    {% elif field.field_type == 'number' %}
+                        <input type="number" 
+                               id="id_{{ field.name }}" 
+                               name="{{ field.name }}" 
+                               class="field-input"
+                               placeholder="{{ field.placeholder|default:'Enter '|add:field.label|default:field.name }}"
+                               {% if field.is_required %}required{% endif %}>
+                    
+                    {% elif field.field_type == 'email' %}
+                        <input type="email" 
+                               id="id_{{ field.name }}" 
+                               name="{{ field.name }}" 
+                               class="field-input"
+                               placeholder="{{ field.placeholder|default:'Enter '|add:field.label|default:field.name }}"
+                               {% if field.is_required %}required{% endif %}>
+                    
+                    {% elif field.field_type == 'boolean' %}
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" 
+                                   id="id_{{ field.name }}" 
+                                   name="{{ field.name }}" 
+                                   class="field-checkbox"
+                                   value="true">
+                            <label for="id_{{ field.name }}" class="field-label" style="margin-bottom: 0;">
+                                {{ field.label|default:field.name|title }}
+                            </label>
+                        </div>
+                    
+                    {% elif field.field_type == 'dropdown' %}
+                        <select id="id_{{ field.name }}" 
+                                name="{{ field.name }}" 
+                                class="field-input field-select"
+                                {% if field.is_required %}required{% endif %}>
+                            <option value="">Select {{ field.label|default:field.name|title }}</option>
+                            {% for option in field.get_options %}
+                                <option value="{{ option.value }}">{{ option.label }}</option>
+                            {% endfor %}
+                        </select>
+                    
+                    {% elif field.field_type == 'radio' %}
+                        <div class="radio-group">
+                            {% for option in field.get_options %}
+                                <div class="checkbox-wrapper" style="margin-bottom: 0.5rem;">
+                                    <input type="radio" 
+                                           id="id_{{ field.name }}_{{ forloop.counter }}" 
+                                           name="{{ field.name }}" 
+                                           class="field-checkbox"
+                                           value="{{ option.value }}"
+                                           {% if field.is_required %}required{% endif %}>
+                                    <label for="id_{{ field.name }}_{{ forloop.counter }}" class="field-label" style="margin-bottom: 0;">
+                                        {{ option.label }}
+                                    </label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    
+                    {% else %}
+                        <input type="text" 
+                               id="id_{{ field.name }}" 
+                               name="{{ field.name }}" 
+                               class="field-input"
+                               placeholder="{{ field.placeholder|default:'Enter '|add:field.label|default:field.name }}"
+                               {% if field.is_required %}required{% endif %}>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div class="field-group">
+                    <p style="color: var(--dark-gray); text-align: center; padding: 2rem;">
+                        No fields configured for this panel. Please contact an administrator to configure the panel fields.
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="submit-section">
+            <a href="{% url 'core:dashboard' %}" class="btn-cancel">
+                Cancel
+            </a>
+            <button type="submit" class="btn-submit">
+                Submit Request
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+// Auto-refresh results every 30 seconds if there are pending/processing operations
+document.addEventListener('DOMContentLoaded', function() {
+    const resultsSection = document.querySelector('.results-section');
+    if (resultsSection) {
+        // Check if there are any pending or processing operations
+        const pendingOperations = document.querySelectorAll('.status-pending, .status-processing');
+        
+        if (pendingOperations.length > 0) {
+            console.log(`Found ${pendingOperations.length} pending/processing operations. Auto-refresh enabled.`);
+            
+            // Auto-refresh every 30 seconds
+            setInterval(function() {
+                console.log('Auto-refreshing panel results...');
+                window.location.reload();
+            }, 30000);
+            
+            // Show auto-refresh indicator
+            const refreshButton = document.querySelector('a[href*="panel_detail"]');
+            if (refreshButton && refreshButton.textContent.includes('Refresh Results')) {
+                refreshButton.innerHTML = '🔄 Auto-refreshing...';
+                refreshButton.style.opacity = '0.7';
+            }
+        }
+    }
+    
+    // Add click handlers for operation output sections to make them expandable
+    const operationOutputs = document.querySelectorAll('.operation-output, .operation-error');
+    operationOutputs.forEach(output => {
+        output.style.cursor = 'pointer';
+        output.title = 'Click to toggle full height';
+        
+        output.addEventListener('click', function() {
+            if (this.style.maxHeight === 'none') {
+                this.style.maxHeight = this.classList.contains('operation-output') ? '300px' : '200px';
+            } else {
+                this.style.maxHeight = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 
