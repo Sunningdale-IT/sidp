@@ -1,0 +1,58 @@
+{{- if .Values.migration.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "idp.fullname" . }}-migration
+  labels:
+    {{- include "idp.labels" . | nindent 4 }}
+    app.kubernetes.io/component: migration
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    metadata:
+      labels:
+        {{- include "idp.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: Never
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "idp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: migration
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ .Values.migration.image.registry }}/{{ .Values.migration.image.repository }}:{{ .Values.migration.image.tag }}
+          imagePullPolicy: {{ .Values.migration.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              echo "Running database migrations..."
+              python manage.py migrate --noinput
+              echo "Creating superuser if it doesn't exist..."
+              python manage.py shell -c "
+              from django.contrib.auth import get_user_model
+              User = get_user_model()
+              if not User.objects.filter(username='admin').exists():
+                  User.objects.create_superuser('admin', 'admin@example.com', 'admin')
+                  print('Superuser created: admin/admin')
+              else:
+                  print('Superuser already exists')
+              "
+              echo "Migration completed successfully!"
+          envFrom:
+            - configMapRef:
+                name: {{ include "idp.fullname" . }}-config
+            - secretRef:
+                name: {{ include "idp.fullname" . }}-secret
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+{{- end }} 

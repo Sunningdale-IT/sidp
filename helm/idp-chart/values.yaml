@@ -1,0 +1,331 @@
+# Default values for idp.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global configuration
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# Application configuration
+app:
+  name: idp
+  version: "1.0.0"
+
+# Image configuration
+image:
+  registry: docker.io
+  repository: your-org/idp
+  tag: "1.0.0"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Replica configuration
+replicaCount:
+  web: 2
+  celery: 2
+  celeryBeat: 1
+  flower: 1
+
+# Service configuration
+service:
+  type: ClusterIP
+  web:
+    port: 8000
+    targetPort: 8000
+  flower:
+    port: 5555
+    targetPort: 5555
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: idp.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: web
+    - host: flower.idp.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: flower
+  tls:
+    - secretName: idp-tls
+      hosts:
+        - idp.yourcompany.com
+        - flower.idp.yourcompany.com
+
+# Resource limits and requests
+resources:
+  web:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  celery:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  celeryBeat:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  flower:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  web:
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  celery:
+    minReplicas: 2
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  web:
+    minAvailable: 1
+  celery:
+    minAvailable: 1
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
+
+# Pod security context
+podSecurityContext:
+  seccompProfile:
+    type: RuntimeDefault
+
+# Node selector, tolerations and affinity
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Environment variables
+env:
+  # Django settings
+  DEBUG: "False"
+  ALLOWED_HOSTS: "idp.yourcompany.com,localhost,127.0.0.1"
+  CORS_ALLOWED_ORIGINS: "https://idp.yourcompany.com"
+  
+  # Database settings (will be overridden by secret)
+  DB_NAME: "idp"
+  DB_USER: "postgres"
+  DB_HOST: "idp-postgresql"
+  DB_PORT: "5432"
+  
+  # Redis settings
+  REDIS_URL: "redis://idp-redis-master:6379/0"
+  
+  # Monitoring
+  PROMETHEUS_METRICS_ENABLED: "True"
+
+# Secrets configuration
+secrets:
+  # Django secret key
+  secretKey: "change-me-in-production-use-a-secure-random-string"
+  
+  # Database password
+  dbPassword: "secure-postgres-password"
+  
+  # Additional secrets
+  additionalSecrets: {}
+    # AWS_ACCESS_KEY_ID: "your-aws-key"
+    # AWS_SECRET_ACCESS_KEY: "your-aws-secret"
+    # AZURE_SUBSCRIPTION_ID: "your-azure-subscription"
+
+# ConfigMap configuration
+configMap:
+  # Additional configuration files
+  additionalConfig: {}
+
+# Persistent Volume Claims
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  annotations: {}
+
+# Health checks
+healthChecks:
+  enabled: true
+  web:
+    livenessProbe:
+      httpGet:
+        path: /health/
+        port: 8000
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /health/
+        port: 8000
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 3
+  celery:
+    livenessProbe:
+      exec:
+        command:
+          - celery
+          - -A
+          - idp
+          - inspect
+          - ping
+      initialDelaySeconds: 30
+      periodSeconds: 30
+      timeoutSeconds: 10
+      failureThreshold: 3
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# RBAC
+rbac:
+  create: true
+  rules:
+    - apiGroups: [""]
+      resources: ["pods", "services", "configmaps", "secrets"]
+      verbs: ["get", "list", "watch"]
+    - apiGroups: ["apps"]
+      resources: ["deployments", "replicasets"]
+      verbs: ["get", "list", "watch"]
+
+# Network Policy
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+# Pod Monitor for Prometheus
+podMonitor:
+  enabled: false
+  namespace: monitoring
+  interval: 30s
+  path: /metrics
+
+# PostgreSQL dependency configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "secure-postgres-password"
+    username: "postgres"
+    password: "secure-postgres-password"
+    database: "idp"
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+# Redis dependency configuration
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+# External PostgreSQL configuration (when postgresql.enabled=false)
+externalPostgresql:
+  host: ""
+  port: 5432
+  username: "postgres"
+  password: ""
+  database: "idp"
+  existingSecret: ""
+  existingSecretPasswordKey: ""
+
+# External Redis configuration (when redis.enabled=false)
+externalRedis:
+  host: ""
+  port: 6379
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: ""
+
+# Migration job configuration
+migration:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: your-org/idp
+    tag: "1.0.0"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Init containers
+initContainers:
+  enabled: true
+  waitForDb:
+    image:
+      registry: docker.io
+      repository: postgres
+      tag: "15-alpine"
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi 

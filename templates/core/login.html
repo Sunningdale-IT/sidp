@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Internal Developer Platform{% endblock %}
+
+{% block extra_css %}
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 70vh;
+        padding: 2rem 0;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 78, 100, 0.1);
+        padding: 3rem;
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid var(--medium-gray);
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-teal);
+        margin-bottom: 0.5rem;
+    }
+
+    .login-subtitle {
+        color: var(--dark-gray);
+        font-size: 1rem;
+    }
+
+    .login-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: var(--charcoal);
+    }
+
+    .form-input {
+        padding: 0.875rem;
+        border: 2px solid var(--medium-gray);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-orange);
+        box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+    }
+
+    .login-button {
+        background: var(--primary-orange);
+        color: white;
+        border: none;
+        padding: 1rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+
+    .login-button:hover {
+        background: #e55a2b;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+    }
+
+    .login-button:active {
+        transform: translateY(0);
+    }
+
+    .message {
+        padding: 0.75rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .message.error {
+        background: #FEE2E2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+
+    .message.success {
+        background: #D4F4DD;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+    }
+
+    .message.info {
+        background: #DBEAFE;
+        color: #1E40AF;
+        border: 1px solid #93C5FD;
+    }
+
+    .message.warning {
+        background: #FEF3C7;
+        color: #92400E;
+        border: 1px solid #FDE68A;
+    }
+
+    .help-text {
+        text-align: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--medium-gray);
+        color: var(--dark-gray);
+        font-size: 0.9rem;
+    }
+
+    .admin-link {
+        color: var(--primary-teal);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .admin-link:hover {
+        text-decoration: underline;
+    }
+
+    @media (max-width: 768px) {
+        .login-card {
+            padding: 2rem;
+            margin: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h1 class="login-title">Welcome Back</h1>
+            <p class="login-subtitle">Sign in to your IDP account</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="message error">
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        {{ error }}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_username" class="form-label">Username</label>
+                <input type="text" 
+                       name="username" 
+                       id="id_username" 
+                       class="form-input" 
+                       required 
+                       autofocus
+                       placeholder="Enter your username">
+            </div>
+
+            <div class="form-group">
+                <label for="id_password" class="form-label">Password</label>
+                <input type="password" 
+                       name="password" 
+                       id="id_password" 
+                       class="form-input" 
+                       required
+                       placeholder="Enter your password">
+            </div>
+
+            <button type="submit" class="login-button">
+                Sign In
+            </button>
+        </form>
+
+        <div class="help-text">
+            <p>Need admin access? <a href="/admin/" class="admin-link">Go to Admin Panel</a></p>
+            <p><strong>Default Users:</strong></p>
+            <p>• Regular user: <strong>testuser</strong> / <strong>testuser123</strong></p>
+            <p>• Superuser: <strong>superuser</strong> / <strong>superuser123</strong></p>
+            <p>• Admin (legacy): <strong>admin</strong> / <strong>admin</strong></p>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "idp.fullname" . }}-web
+  labels:
+    {{- include "idp.web.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount.web }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "idp.web.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+      labels:
+        {{- include "idp.web.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "idp.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.initContainers.enabled }}
+      initContainers:
+        - name: wait-for-db
+          image: {{ .Values.initContainers.waitForDb.image.registry }}/{{ .Values.initContainers.waitForDb.image.repository }}:{{ .Values.initContainers.waitForDb.image.tag }}
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h {{ include "idp.postgresql.host" . }} -p {{ include "idp.postgresql.port" . }} -U {{ include "idp.postgresql.username" . }}; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready!"
+          resources:
+            {{- toYaml .Values.initContainers.waitForDb.resources | nindent 12 }}
+      {{- end }}
+      containers:
+        - name: web
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "idp.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              python manage.py migrate &&
+              python manage.py collectstatic --noinput &&
+              gunicorn --bind 0.0.0.0:8000 --workers 4 --timeout 120 idp.wsgi:application
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ include "idp.fullname" . }}-config
+            - secretRef:
+                name: {{ include "idp.fullname" . }}-secret
+          {{- if .Values.healthChecks.enabled }}
+          livenessProbe:
+            {{- toYaml .Values.healthChecks.web.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.healthChecks.web.readinessProbe | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources.web | nindent 12 }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: static-files
+              mountPath: /app/staticfiles
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: {{ include "idp.fullname" . }}-static-pvc
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }} 
